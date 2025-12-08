@@ -1,0 +1,5 @@
+{
+  "name": "InvestPrime Dashboard",
+  "description": "A comprehensive investment dashboard featuring daily variable returns (2% - 5%), referral systems, and wallet management.",
+  "requestFramePermissions": []
+}
