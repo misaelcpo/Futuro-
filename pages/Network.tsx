@@ -1,196 +1,188 @@
-import React, { useState } from 'react';
-import { Copy, Users, UserPlus, Gift, Crown, Star, ChevronRight, Layers } from 'lucide-react';
-import { Referral } from '../types';
-import { formatCurrency, formatDate } from '../utils';
+
+import React, { useState, useMemo } from 'react';
+import { 
+  Users, 
+  MessageCircle, 
+  Trophy, 
+  CheckCircle2,
+  Copy,
+  Zap,
+  Award,
+  Layers,
+  Search,
+  Filter,
+  ArrowRight,
+  TrendingUp,
+  UserCheck,
+  ChevronRight,
+  Network as NetworkIcon,
+  Crown,
+  Percent,
+  Wallet,
+  ArrowUpRight
+} from 'lucide-react';
+import { AppData, Milestone, Referral } from '../types';
+import { formatCurrency } from '../utils';
 
 interface NetworkProps {
-  referrals: Referral[];
-  referralLink: string;
-  simulateReferral: () => void;
+  data: AppData;
+  onClaimMilestone: (id: string, reward: number) => void;
 }
 
-export const Network: React.FC<NetworkProps> = ({ referrals, referralLink, simulateReferral }) => {
+export const Network: React.FC<NetworkProps> = ({ data, onClaimMilestone }) => {
   const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState<number | 'all'>(1);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const MILESTONES: Milestone[] = [
+    { id: 'm1', name: 'Elite Bronze', requiredVolume: 10000, reward: 250, icon: '🥉' },
+    { id: 'm2', name: 'Elite Prata', requiredVolume: 50000, reward: 1250, icon: '🥈' },
+    { id: 'm3', name: 'Elite Ouro', requiredVolume: 150000, reward: 5000, icon: '🥇' },
+    { id: 'm4', name: 'Embaixador Prime', requiredVolume: 500000, reward: 20000, icon: '💎' },
+  ];
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(referralLink);
+    navigator.clipboard.writeText(`https://miningprime.vc/join?ref=${data.user.referralCode}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Gamification Logic
-  const nextLevelCount = 10;
-  const currentCount = referrals.length;
-  const progress = Math.min((currentCount / nextLevelCount) * 100, 100);
+  const filteredReferrals = useMemo(() => {
+    let list = data.referrals;
+    if (activeTab !== 'all') list = list.filter(r => r.level === activeTab);
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      list = list.filter(r => r.name.toLowerCase().includes(term) || r.phone.includes(term));
+    }
+    return list;
+  }, [data.referrals, activeTab, searchTerm]);
 
-  const levels = [
-    { level: 1, percent: '12%', label: 'Indicação Direta' },
-    { level: 2, percent: '5%', label: 'Indireta' },
-    { level: 3, percent: '3%', label: 'Indireta' },
-    { level: 4, percent: '2%', label: 'Equipe' },
-    { level: 5, percent: '1%', label: 'Equipe' },
-    { level: '6-10', percent: '0.5%', label: 'Liderança Global' },
-  ];
+  const nextMilestone = MILESTONES.find(m => !data.user.unlockedMilestones.includes(m.id)) || MILESTONES[MILESTONES.length - 1];
+  const progressPercent = Math.min((data.user.networkVolume / nextMilestone.requiredVolume) * 100, 100);
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-white flex items-center">
-            Programa de Embaixadores <Crown className="ml-3 w-6 h-6 text-yellow-500 animate-pulse" />
-          </h1>
-          <p className="text-slate-400">Construa sua renda passiva em até 10 níveis de profundidade.</p>
-        </div>
-        <button
-          onClick={simulateReferral}
-          className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold rounded-lg transition-colors flex items-center shadow-lg shadow-purple-500/20 border border-purple-400/20"
-        >
-          <UserPlus className="w-4 h-4 mr-2" />
-          Simular Indicação (Random Nível)
-        </button>
-      </div>
-
-      {/* VIP Status Card */}
-      <div className="bg-gradient-to-r from-purple-900 to-slate-900 p-8 rounded-2xl border border-purple-500/30 shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-        
-        <div className="flex flex-col md:flex-row gap-8 relative z-10">
-          <div className="flex-1">
-            <h3 className="text-purple-300 font-bold uppercase tracking-wider text-sm mb-2">Nível Atual</h3>
-            <div className="flex items-baseline gap-2 mb-4">
-               <h2 className="text-4xl font-extrabold text-white">Líder Expansion</h2>
-               <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" />
-            </div>
-            
+    <div className="space-y-10 animate-slide-up pb-32">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        <div className="xl:col-span-2 bg-slate-900 border border-white/5 p-10 rounded-[3.5rem] relative overflow-hidden flex flex-col justify-center">
+          <div className="absolute top-0 right-0 w-80 h-full bg-orange-500/5 blur-[100px] -mr-40"></div>
+          <div className="relative z-10 space-y-8">
             <div className="space-y-2">
-              <div className="flex justify-between text-sm text-slate-300 font-medium">
-                <span>Meta para Royalties Globais</span>
-                <span>{currentCount} / {nextLevelCount} ativos</span>
+              <div className="flex items-center gap-2">
+                <NetworkIcon className="w-5 h-5 text-orange-500" />
+                <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em]">Guild Master Hub</span>
               </div>
-              <div className="h-4 bg-slate-950 rounded-full overflow-hidden border border-purple-500/20">
-                <div 
-                  className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-1000 ease-out"
-                  style={{ width: `${progress}%` }}
-                ></div>
-              </div>
+              <h1 className="text-4xl font-black text-white tracking-tighter">Mining <span className="text-orange-500">Guild</span> Center</h1>
+              <p className="text-slate-500 text-sm font-medium max-w-lg">
+                Construa sua rede e receba bônus agressivos sobre o volume de hardware da sua guilda.
+              </p>
             </div>
-          </div>
-
-          <div className="md:border-l md:border-purple-500/20 md:pl-8 flex flex-col justify-center">
-             <p className="text-slate-400 text-sm mb-1">Ganhos de Rede Acumulados</p>
-             <p className="text-4xl font-bold text-white tracking-tight">
-               {formatCurrency(referrals.reduce((acc, curr) => acc + curr.commissionEarned, 0))}
-             </p>
-             <button className="text-purple-400 text-sm font-semibold mt-2 flex items-center hover:text-purple-300 transition-colors">
-               Ver extrato detalhado <ChevronRight className="w-4 h-4 ml-1" />
-             </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Referral Link Section */}
-        <div className="lg:col-span-2 glass-card p-8 rounded-2xl border-t border-slate-700">
-          <h3 className="text-white font-bold text-lg mb-4 flex items-center">
-            <Gift className="w-5 h-5 mr-2 text-brand-400" />
-            Link de Indicação (Nível 1 - 12%)
-          </h3>
-          <div className="flex flex-col gap-4">
-            <div className="flex-1 bg-slate-950 border-2 border-slate-800 rounded-xl px-4 py-4 flex items-center justify-between group hover:border-brand-500/50 transition-colors">
-              <span className="text-slate-300 font-mono text-sm truncate">{referralLink}</span>
-            </div>
-            <button
-              onClick={handleCopy}
-              className={`
-                w-full py-3 rounded-xl font-bold text-white transition-all transform active:scale-95 shadow-lg
-                ${copied ? 'bg-green-600' : 'bg-brand-600 hover:bg-brand-500 hover:-translate-y-1'}
-              `}
-            >
-              {copied ? 'Copiado!' : 'Copiar Link de Divulgação'}
-            </button>
-          </div>
-        </div>
-
-        {/* Levels Info */}
-        <div className="glass-card p-6 rounded-2xl">
-          <h3 className="text-white font-bold text-sm mb-4 flex items-center uppercase tracking-wider">
-            <Layers className="w-4 h-4 mr-2 text-purple-400" />
-            Comissões Unilevel
-          </h3>
-          <div className="space-y-2">
-            {levels.map((lvl, index) => (
-              <div key={index} className="flex justify-between items-center p-2 rounded hover:bg-slate-700/30 transition-colors">
-                <span className="text-slate-400 text-sm font-medium">Nível {lvl.level}</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-500">{lvl.label}</span>
-                  <span className="text-brand-400 font-bold bg-brand-500/10 px-2 py-0.5 rounded border border-brand-500/20 text-xs">
-                    {lvl.percent}
-                  </span>
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Link de Convite da Guilda</label>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-1 bg-slate-950 border border-white/5 rounded-2xl px-6 h-16 flex items-center text-slate-300 font-mono text-sm overflow-hidden shadow-inner">
+                  <span className="truncate">miningprime.vc/ref={data.user.referralCode}</span>
                 </div>
+                <button onClick={handleCopy} className={`px-8 h-16 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-xl flex items-center justify-center gap-2 ${copied ? 'bg-emerald-500 text-slate-950' : 'bg-white text-slate-950 hover:bg-orange-500 active:scale-95'}`}>
+                  {copied ? <CheckCircle2 className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                  {copied ? 'Copiado' : 'Convidar'}
+                </button>
               </div>
-            ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="glass-panel p-10 rounded-[3.5rem] border-orange-500/20 bg-orange-500/[0.02] flex flex-col justify-between">
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+               <div className="p-4 bg-orange-500 text-slate-950 rounded-2xl shadow-xl shadow-orange-500/20"><Crown className="w-6 h-6" /></div>
+               <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest px-4 py-1.5 bg-orange-500/10 rounded-full border border-orange-500/20">{data.user.tier} RANK</span>
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-black text-white uppercase tracking-tight">Próxima Patente: <br/>{nextMilestone.name}</h3>
+              <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Recompensa: {formatCurrency(nextMilestone.reward)}</p>
+            </div>
+          </div>
+          <div className="pt-8 space-y-3">
+             <div className="flex justify-between text-[10px] font-black uppercase text-slate-500 tracking-widest">
+                <span>Progresso Global</span>
+                <span className="text-white">{progressPercent.toFixed(1)}%</span>
+             </div>
+             <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden shadow-inner">
+                <div className="h-full bg-orange-500 shadow-[0_0_15px_#f97316] transition-all duration-1000" style={{ width: `${progressPercent}%` }}></div>
+             </div>
           </div>
         </div>
       </div>
 
-      {/* Referrals List */}
-      <div className="glass-card rounded-2xl overflow-hidden">
-        <div className="px-6 py-5 border-b border-slate-700 flex items-center justify-between bg-slate-800/50">
-          <div className="flex items-center">
-            <Users className="w-5 h-5 mr-2 text-slate-400" />
-            <h3 className="font-semibold text-white">Últimas Comissões Recebidas</h3>
-          </div>
-          <span className="bg-slate-700 text-slate-300 text-xs px-2 py-1 rounded-full">{currentCount} Total</span>
-        </div>
-        
-        {referrals.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-700">
-              <Users className="w-8 h-8 text-slate-600" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {[
+          { l: 1, p: '12%', d: 'Indicações Diretas', c: 'orange', desc: 'Sua linha de frente principal.' },
+          { l: 2, p: '5%', d: 'Parceiros de Guilda', c: 'blue', desc: 'Indicações dos seus diretos.' },
+          { l: 3, p: '3%', d: 'Rede Distribuída', c: 'emerald', desc: 'O poder da rede profunda.' },
+        ].map(level => (
+           <div key={level.l} className="glass-panel p-8 rounded-[3rem] border-white/5 bg-slate-900/40 relative overflow-hidden group hover:border-orange-500/30 transition-all">
+              <div className="flex justify-between items-start mb-6 relative z-10">
+                 <div className={`w-10 h-10 rounded-xl bg-${level.c}-500/10 border border-${level.c}-500/20 flex items-center justify-center text-${level.c}-500 font-black text-sm`}>L{level.l}</div>
+                 <div className="text-right">
+                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Cashback Guilda</p>
+                    <p className={`text-3xl font-black text-${level.c}-500 font-mono`}>{level.p}</p>
+                 </div>
+              </div>
+              <h4 className="text-white font-black text-sm uppercase tracking-tight relative z-10">{level.d}</h4>
+              <p className="text-[10px] text-slate-500 font-medium leading-relaxed relative z-10 mt-2">{level.desc}</p>
+           </div>
+        ))}
+      </div>
+
+      <div className="glass-panel rounded-[3.5rem] border-white/5 overflow-hidden bg-slate-900/20">
+         <div className="p-8 md:p-10 border-b border-white/5 bg-slate-900/40 flex flex-col lg:flex-row justify-between items-center gap-8">
+            <h2 className="text-2xl font-black text-white uppercase tracking-tight">Membros da Guilda</h2>
+            <div className="flex flex-wrap justify-center bg-slate-950 p-1.5 rounded-2xl border border-white/5 w-full md:w-auto shadow-inner">
+               <button onClick={() => setActiveTab('all')} className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'all' ? 'bg-white text-slate-950' : 'text-slate-500 hover:text-white'}`}>Global</button>
+               <button onClick={() => setActiveTab(1)} className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 1 ? 'bg-orange-500 text-slate-950' : 'text-slate-500 hover:text-white'}`}>Nível 1</button>
+               <button onClick={() => setActiveTab(2)} className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 2 ? 'bg-blue-500 text-slate-950' : 'text-slate-500 hover:text-white'}`}>Nível 2</button>
+               <button onClick={() => setActiveTab(3)} className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 3 ? 'bg-emerald-500 text-slate-950' : 'text-slate-500 hover:text-white'}`}>Nível 3</button>
             </div>
-            <h3 className="text-slate-300 font-medium mb-1">Comece sua rede agora</h3>
-            <p className="text-slate-500 text-sm max-w-sm mx-auto">
-              Copie seu link acima e envie para amigos. Você ganha até o 10º nível de profundidade.
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
+         </div>
+
+         <div className="overflow-x-auto max-h-[600px] scrollbar-hide">
             <table className="w-full text-left">
-              <thead className="bg-slate-900/50 text-slate-500 text-xs uppercase tracking-wider">
-                <tr>
-                  <th className="px-6 py-4 font-semibold">Investidor</th>
-                  <th className="px-6 py-4 font-semibold">Nível</th>
-                  <th className="px-6 py-4 font-semibold">Aporte</th>
-                  <th className="px-6 py-4 font-semibold text-right">Sua Comissão</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-700/50">
-                {referrals.slice().reverse().map((ref) => (
-                  <tr key={ref.id} className="hover:bg-slate-700/20 transition-colors group">
-                    <td className="px-6 py-4 text-white font-medium flex items-center">
-                       <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-500 flex items-center justify-center text-xs font-bold mr-3">
-                         {ref.name.charAt(0)}
-                       </div>
-                       {ref.name}
-                    </td>
-                    <td className="px-6 py-4 text-slate-300 text-sm">
-                      <span className={`px-2 py-1 rounded-md text-xs font-bold ${ref.level === 1 ? 'bg-brand-500/20 text-brand-400' : 'bg-slate-700 text-slate-400'}`}>
-                        Nível {ref.level}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-slate-300">{formatCurrency(ref.investedAmount)}</td>
-                    <td className="px-6 py-4 text-right">
-                      <span className="text-brand-400 font-bold bg-brand-500/10 px-3 py-1 rounded-full border border-brand-500/20">
-                        +{formatCurrency(ref.commissionEarned)}
-                      </span>
-                    </td>
+               <thead className="sticky top-0 bg-slate-950 text-[10px] font-black text-slate-600 uppercase tracking-widest z-20">
+                  <tr>
+                     <th className="px-10 py-6">Operador</th>
+                     <th className="px-10 py-6">Contato</th>
+                     <th className="px-10 py-6">Aporte Hardware</th>
+                     <th className="px-10 py-6 text-right">Royalty</th>
                   </tr>
-                ))}
-              </tbody>
+               </thead>
+               <tbody className="divide-y divide-white/5">
+                  {filteredReferrals.map(ref => (
+                     <tr key={ref.id} className="hover:bg-white/[0.01] transition-colors group">
+                        <td className="px-10 py-6">
+                           <div className="flex items-center gap-4">
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs ${ref.level === 1 ? 'bg-orange-500/10 text-orange-400' : 'bg-slate-800 text-slate-500'}`}>{ref.name.charAt(0)}</div>
+                              <div>
+                                 <p className="text-sm font-black text-white">{ref.name}</p>
+                                 <span className="text-[9px] text-slate-600 font-bold uppercase tracking-tighter">Nv {ref.level} Miner</span>
+                              </div>
+                           </div>
+                        </td>
+                        <td className="px-10 py-6">
+                           <a href={`https://wa.me/${ref.phone.replace(/\D/g,'')}`} target="_blank" className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 transition-all text-[10px] font-black uppercase tracking-widest">
+                              Suporte Guilda
+                           </a>
+                        </td>
+                        <td className="px-10 py-6">
+                           <span className="text-xs text-slate-300 font-black font-mono">{formatCurrency(ref.investedAmount)}</span>
+                        </td>
+                        <td className="px-10 py-6 text-right">
+                           <span className="text-emerald-400 font-black text-sm">+{formatCurrency(ref.commissionEarned)}</span>
+                        </td>
+                     </tr>
+                  ))}
+               </tbody>
             </table>
-          </div>
-        )}
+         </div>
       </div>
     </div>
   );

@@ -1,123 +1,140 @@
+
 import React from 'react';
 import { 
   LayoutDashboard, 
-  TrendingUp, 
-  Wallet, 
-  Users, 
-  History, 
-  UserCircle, 
-  LogOut,
-  MessageCircle,
-  ClipboardCheck,
-  MonitorPlay,
+  ShieldCheck, 
+  Wallet,
+  History,
   ArrowRightLeft,
-  ShieldAlert
+  HelpCircle,
+  Zap,
+  LogOut,
+  UserCircle,
+  Users,
+  Cpu,
+  MessageCircle,
+  X,
+  ShieldAlert,
+  Database,
+  Lock,
+  Settings
 } from 'lucide-react';
-import { Language, UserState } from '../types';
-import { t } from '../translations';
+import { UserRole } from '../types';
+import { Logo } from './Logo';
 
 interface SidebarProps {
+  role: UserRole;
   currentView: string;
-  setCurrentView: (view: string) => void;
+  setView: (v: string) => void;
   isMobileOpen: boolean;
-  setIsMobileOpen: (open: boolean) => void;
-  language: Language;
-  onLogout?: () => void;
-  user?: UserState; // Need user to check isAdmin
+  setIsMobileOpen: (v: boolean) => void;
+  onLogout: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ 
-  currentView, 
-  setCurrentView, 
-  isMobileOpen, 
-  setIsMobileOpen, 
-  language,
-  onLogout,
-  user
-}) => {
-  
-  const menuItems = [
-    { id: 'dashboard', label: t(language, 'dashboard'), icon: LayoutDashboard },
-    { id: 'operations', label: t(language, 'operations'), icon: MonitorPlay },
-    { id: 'tasks', label: t(language, 'tasks'), icon: ClipboardCheck },
-    { id: 'transfer', label: t(language, 'transfer'), icon: ArrowRightLeft },
-    { id: 'invest', label: t(language, 'invest'), icon: TrendingUp },
-    { id: 'withdraw', label: t(language, 'withdraw'), icon: Wallet },
-    { id: 'network', label: t(language, 'network'), icon: Users },
-    { id: 'history', label: t(language, 'history'), icon: History },
-    { id: 'profile', label: t(language, 'profile'), icon: UserCircle },
+export const Sidebar: React.FC<SidebarProps> = ({ role, currentView, setView, isMobileOpen, setIsMobileOpen, onLogout }) => {
+  const isAdmin = role === UserRole.ADMIN;
+
+  const adminMenu = [
+    { section: 'Comando Central', items: [
+      { id: 'dashboard', label: 'Dashboard Master', icon: ShieldAlert },
+      { id: 'users', label: 'Gestão de Redes', icon: Users },
+      { id: 'treasury', label: 'Tesouraria Global', icon: Database },
+    ]},
+    { section: 'Relatórios', items: [
+      { id: 'history', label: 'Logs do Sistema', icon: History },
+      { id: 'audit', label: 'Auditoria KYC', icon: Lock },
+    ]},
+    { section: 'Sistema', items: [
+      { id: 'profile', label: 'Configurações', icon: Settings },
+    ]}
   ];
 
-  if (user?.isAdmin) {
-    menuItems.push({ id: 'admin', label: t(language, 'admin'), icon: ShieldAlert });
-  }
+  const clientMenu = [
+    { section: 'Mainframe', items: [
+      { id: 'dashboard', label: 'Console Miner', icon: LayoutDashboard },
+      { id: 'marketplace', label: 'Hardware Shop', icon: Cpu },
+      { id: 'network', label: 'Mining Guild', icon: Users },
+    ]},
+    { section: 'Tesouraria', items: [
+      { id: 'withdraw', label: 'Saque BTC', icon: Wallet },
+      { id: 'transfer', label: 'Mover Hashrate', icon: ArrowRightLeft },
+      { id: 'history', label: 'Logs de Rede', icon: History },
+    ]},
+    { section: 'Operacional', items: [
+      { id: 'profile', label: 'ID Minerador', icon: UserCircle },
+      { id: 'verification', label: 'Selo de Confiança', icon: ShieldCheck },
+      { id: 'guide', label: 'Protocolo Alpha', icon: HelpCircle },
+    ]}
+  ];
 
-  const handleNav = (viewId: string) => {
-    setCurrentView(viewId);
-    setIsMobileOpen(false);
-  };
+  const menuItems = isAdmin ? adminMenu : clientMenu;
 
   return (
     <>
-      {/* Mobile Overlay */}
       {isMobileOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
-          onClick={() => setIsMobileOpen(false)}
+          className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[100] lg:hidden animate-fadeIn" 
+          onClick={() => setIsMobileOpen(false)} 
         />
       )}
-
-      {/* Sidebar Container */}
-      <aside className={`
-        fixed top-0 left-0 z-50 h-full w-64 bg-slate-900 border-r border-slate-800 transition-transform duration-300 ease-in-out
-        ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
+      <aside className={`fixed top-0 left-0 z-[110] h-full w-[280px] md:w-64 bg-slate-900 border-r border-white/5 transition-all duration-300 ease-in-out ${isMobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="h-16 flex items-center px-6 border-b border-slate-800">
-            <TrendingUp className="w-8 h-8 text-brand-500 mr-2" />
-            <span className="text-xl font-bold text-white tracking-wide">Invest<span className="text-brand-500">Prime</span></span>
+          <div className="h-28 flex items-center px-8 gap-3 group relative">
+            <Logo className="w-10 h-10 relative z-10" />
+            <div className="flex flex-col">
+              <span className="text-xl font-black text-white tracking-tighter">Mining<span className="text-orange-500">Prime</span></span>
+              <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">{isAdmin ? 'Master Control' : 'Cloud Hashrate'}</span>
+            </div>
+            <button 
+              onClick={() => setIsMobileOpen(false)}
+              className="lg:hidden absolute top-4 right-4 p-2 text-slate-500 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
-            {menuItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => handleNav(item.id)}
-                className={`
-                  w-full flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-colors
-                  ${currentView === item.id 
-                    ? 'bg-brand-500/10 text-brand-400 border border-brand-500/20' 
-                    : item.id === 'admin' ? 'text-red-400 hover:bg-red-500/10' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}
-                `}
-              >
-                <item.icon className={`w-5 h-5 mr-3 ${currentView === item.id ? 'text-brand-400' : item.id === 'admin' ? 'text-red-500' : 'text-slate-500'}`} />
-                {item.label}
-              </button>
+          <nav className="flex-1 py-4 px-4 space-y-8 overflow-y-auto scrollbar-hide">
+            {menuItems.map((section, idx) => (
+              <div key={idx} className="space-y-1">
+                <p className="px-4 text-[10px] font-black text-slate-600 uppercase tracking-widest mb-3">{section.section}</p>
+                {section.items.map(item => (
+                  <button
+                    key={item.id}
+                    onClick={() => { setView(item.id); setIsMobileOpen(false); }}
+                    className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-[13px] font-bold transition-all group relative ${currentView === item.id 
+                      ? 'bg-orange-500/10 text-orange-400 border border-orange-500/10' 
+                      : 'text-slate-500 hover:bg-white/5 hover:text-slate-100'}`}
+                  >
+                    <item.icon className={`w-4 h-4 transition-transform group-hover:scale-110 ${currentView === item.id ? 'text-orange-400' : 'text-slate-500'}`} />
+                    {item.label}
+                    {currentView === item.id && (
+                       <div className="absolute right-4 w-1.5 h-1.5 bg-orange-500 rounded-full shadow-[0_0_8px_#f97316]"></div>
+                    )}
+                  </button>
+                ))}
+              </div>
             ))}
-            
-            {/* WhatsApp Group Link - External */}
-            <a 
-              href="https://chat.whatsapp.com/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="w-full flex items-center px-3 py-3 rounded-lg text-sm font-medium text-green-400 hover:bg-slate-800 transition-colors mt-4"
-            >
-              <MessageCircle className="w-5 h-5 mr-3 text-green-500" />
-              {t(language, 'whatsapp')}
-            </a>
+
+            {!isAdmin && (
+              <div className="space-y-1 pt-4">
+                  <p className="px-4 text-[10px] font-black text-slate-600 uppercase tracking-widest mb-3">Comunidade</p>
+                  <a 
+                    href="https://wa.me/5500000000000" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-[13px] font-bold text-emerald-500 hover:bg-emerald-500/10 transition-all group"
+                  >
+                    <MessageCircle className="w-4 h-4 text-emerald-500" />
+                    Grupo VIP WhatsApp
+                  </a>
+              </div>
+            )}
           </nav>
 
-          {/* User Footer */}
-          <div className="p-4 border-t border-slate-800">
-            <button 
-              onClick={onLogout}
-              className="flex items-center w-full px-3 py-2 text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors"
-            >
-              <LogOut className="w-5 h-5 mr-3" />
-              {t(language, 'logout')}
-            </button>
+          <div className="p-4 border-t border-white/5 space-y-2">
+             <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-4 text-[13px] font-bold text-red-500/80 hover:bg-red-500/10 rounded-2xl transition-all">
+                <LogOut className="w-4 h-4" /> Desligar Sessão
+             </button>
           </div>
         </div>
       </aside>

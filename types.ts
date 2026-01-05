@@ -1,44 +1,104 @@
+
+export enum UserRole {
+  CLIENT = 'CLIENT',
+  ADMIN = 'ADMIN',
+  PROVIDER = 'PROVIDER'
+}
+
+export enum UserTier {
+  BASIC = 'BASIC', 
+  PRO = 'PRO',      
+  WHALE = 'WHALE',  
+  MASTER = 'MASTER'   
+}
+
+export enum VerificationStatus {
+  NOT_SUBMITTED = 'NOT_SUBMITTED',
+  PENDING = 'PENDING',
+  VERIFIED = 'VERIFIED',
+  REJECTED = 'REJECTED'
+}
+
+export type Language = 'pt' | 'en' | 'es';
+
 export enum TransactionType {
   DEPOSIT = 'DEPOSIT',
   WITHDRAWAL = 'WITHDRAWAL',
-  YIELD = 'YIELD', // Daily profit
-  COMMISSION = 'COMMISSION', // Referral bonus
-  DAILY_TASK = 'DAILY_TASK', // Daily login bonus
-  TRANSFER_SENT = 'TRANSFER_SENT', // P2P Sent
-  TRANSFER_RECEIVED = 'TRANSFER_RECEIVED', // P2P Received
+  YIELD = 'YIELD',
+  COMMISSION = 'COMMISSION',
+  HARDWARE_PURCHASE = 'HARDWARE_PURCHASE',
+  TRANSFER_SENT = 'TRANSFER_SENT',
+  TRANSFER_RECEIVED = 'TRANSFER_RECEIVED',
+  GUILD_BONUS = 'GUILD_BONUS',
+  DAILY_TASK = 'DAILY_TASK'
 }
 
 export interface Transaction {
   id: string;
   type: TransactionType;
+  description: string;
   amount: number;
   date: string;
-  description: string;
   status: 'COMPLETED' | 'PENDING' | 'FAILED';
 }
 
-export interface Referral {
+export interface ActivePackage {
   id: string;
   name: string;
-  dateJoined: string;
-  investedAmount: number;
-  commissionEarned: number;
-  level: number; // Level 1 to 10
+  amount: number;
+  hashrate: number;
+  dailyYield: number;
+  date: string;
 }
 
 export interface UserState {
-  balance: number; // Available for withdrawal
-  activeCapital: number; // Currently generating yield
-  totalEarnings: number; // Total profit generated
-  totalCommission: number; // Total from referrals
-  pixKey: string;
-  pixKeyType: 'CPF' | 'EMAIL' | 'PHONE' | 'RANDOM';
+  id: string;
+  role: UserRole;
+  tier: UserTier;
   name: string;
   email: string;
-  isAdmin?: boolean; // New Admin Flag
+  phone: string;
+  city: string;
+  balance: number;
+  investedCashback: number; 
+  totalInvested: number; 
+  totalCashbackEarned: number;
+  verificationStatus: VerificationStatus;
+  rating: number;
+  pixKey?: string;
+  status: 'ACTIVE' | 'BANNED';
+  adminRevenue?: number;
+  sessionProfit?: number;
+  protectionEnabled: boolean;
+  referralCode: string;
+  networkVolume: number; 
+  unlockedMilestones: string[]; 
+  guildMultiplier: number;
+  activePackages: ActivePackage[];
+  lastClaimDate?: string | null;
+  lastYieldSync?: string; // NOVO: Timestamp do último rendimento calculado
 }
 
-export type Language = 'pt' | 'en' | 'es';
+export interface AppData {
+  user: UserState;
+  allUsers: UserState[]; 
+  notifications: Notification[];
+  language: Language;
+  transactions: Transaction[];
+  systemConfig: {
+    withdrawalsEnabled: boolean;
+    minWithdraw: number;
+    globalYieldMultiplier: number;
+  };
+  platformStats: {
+    totalVolume: number;
+    activeUsers: number;
+    insuranceFund: number;
+    reserveRatio: number;
+    livePayouts: string[];
+  };
+  referrals: Referral[];
+}
 
 export interface Notification {
   id: string;
@@ -46,15 +106,42 @@ export interface Notification {
   message: string;
   date: string;
   read: boolean;
-  type: 'success' | 'info' | 'warning';
+  type: 'success' | 'warning' | 'info';
 }
 
-export interface AppData {
-  user: UserState;
-  transactions: Transaction[];
-  referrals: Referral[];
-  notifications: Notification[];
-  lastYieldDate: string | null;
-  lastDailyTaskDate: string | null; // Track last daily bonus claim
-  language: Language;
+export interface Referral {
+  id: string;
+  name: string;
+  phone: string;
+  level: 1 | 2 | 3;
+  investedAmount: number;
+  commissionEarned: number;
+  dateJoined: string;
+  tier: UserTier;
+}
+
+export interface Milestone {
+  id: string;
+  name: string;
+  requiredVolume: number;
+  reward: number;
+  icon: string;
+}
+
+export enum JobStatus {
+  PENDING = 'PENDING',
+  ACCEPTED = 'ACCEPTED',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+  NEGOTIATING = 'NEGOTIATING'
+}
+
+export interface ServiceJob {
+  id: string;
+  status: JobStatus;
+  date: string;
+  category: string;
+  description: string;
+  location: string;
+  budget: number;
 }

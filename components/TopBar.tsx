@@ -1,8 +1,10 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, ChevronDown, Check, Globe, X, Menu, TrendingUp } from 'lucide-react';
+import { Bell, ChevronDown, Check, Globe, X } from 'lucide-react';
 import { Language, Notification } from '../types';
 import { t } from '../translations';
 import { formatDate } from '../utils';
+import { Logo } from './Logo';
 
 interface TopBarProps {
   currentView: string;
@@ -23,13 +25,49 @@ export const TopBar: React.FC<TopBarProps> = ({
 }) => {
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
+  const [tickerItems, setTickerItems] = useState<string[]>([]);
   
   const notifRef = useRef<HTMLDivElement>(null);
   const langRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  // Click outside to close dropdowns
+  useEffect(() => {
+    const names = ["Carlos S.", "Ana M.", "Roberto J.", "Fernanda L.", "João P.", "Mariana G.", "Ricardo W.", "Beatriz H.", "Marcos T.", "Luana K."];
+    const actions = [
+      "acabou de sacar",
+      "recebeu bônus de",
+      "ganhou comissão de",
+      "resgatou cashback de",
+      "recebeu pagamento de"
+    ];
+
+    const generateInitialItems = () => {
+      return Array.from({ length: 15 }).map(() => {
+        const name = names[Math.floor(Math.random() * names.length)];
+        const action = actions[Math.floor(Math.random() * actions.length)];
+        const amount = (Math.random() * 2500 + 50).toFixed(2);
+        return `${name} ${action} R$ ${parseFloat(amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+      });
+    };
+
+    setTickerItems(generateInitialItems());
+
+    const interval = setInterval(() => {
+      setTickerItems(prev => {
+        const next = [...prev];
+        const indexToReplace = Math.floor(Math.random() * next.length);
+        const name = names[Math.floor(Math.random() * names.length)];
+        const action = actions[Math.floor(Math.random() * actions.length)];
+        const amount = (Math.random() * 1500 + 20).toFixed(2);
+        next[indexToReplace] = `${name} ${action} R$ ${parseFloat(amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+        return next;
+      });
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
@@ -53,12 +91,16 @@ export const TopBar: React.FC<TopBarProps> = ({
   const getPageTitle = (view: string) => {
     const map: Record<string, string> = {
       dashboard: t(language, 'dashboard'),
-      invest: t(language, 'invest'),
+      marketplace: t(language, 'invest'),
       withdraw: t(language, 'withdraw'),
       network: t(language, 'network'),
       history: t(language, 'history'),
       profile: t(language, 'profile'),
       tasks: t(language, 'tasks'),
+      transfer: t(language, 'transfer'),
+      admin: t(language, 'admin'),
+      verification: 'Nível KYC',
+      guide: 'Regulamento'
     };
     return map[view] || view;
   };
@@ -69,69 +111,59 @@ export const TopBar: React.FC<TopBarProps> = ({
     { code: 'es', label: 'Español', flag: '🇪🇸' },
   ];
 
-  // Mock data for the ticker
-  const tickerItems = [
-    "Carlos S. acabou de sacar R$ 1.250,00",
-    "Ana M. investiu R$ 5.000,00 no Pool HFT",
-    "Roberto J. recebeu R$ 345,00 de comissão",
-    "Fernanda L. sacou R$ 890,00 via PIX",
-    "Pool de Arbitragem atingiu 13.5% de lucro hoje",
-    "João P. ativou o plano VIP",
-    "Mariana G. investiu R$ 2.500,00",
-  ];
-
   return (
-    <div className="flex flex-col z-20 relative">
-      {/* Social Proof Ticker */}
-      <div className="bg-emerald-950/80 border-b border-emerald-900/50 h-8 overflow-hidden relative flex items-center">
-        <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-slate-900 to-transparent z-10 hidden md:block"></div>
-        <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-slate-900 to-transparent z-10 hidden md:block"></div>
-        <div className="animate-marquee whitespace-nowrap flex items-center gap-12 px-4">
+    <div className="flex flex-col z-30 sticky top-0">
+      <div className="bg-emerald-950/90 backdrop-blur-md border-b border-emerald-900/40 h-8 overflow-hidden relative flex items-center">
+        <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-emerald-950 to-transparent z-10"></div>
+        <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-emerald-950 to-transparent z-10"></div>
+        
+        <div className="animate-marquee whitespace-nowrap flex items-center gap-12">
           {tickerItems.map((item, i) => (
-            <span key={i} className="text-xs font-medium text-emerald-400 flex items-center">
-              <TrendingUp className="w-3 h-3 mr-1" /> {item}
+            <span key={i} className="text-[9px] font-bold text-emerald-400/80 flex items-center gap-2 uppercase tracking-widest">
+              <div className="w-1 h-1 bg-brand-500 rounded-full"></div>
+              {item}
             </span>
           ))}
-          {/* Duplicate for seamless loop */}
           {tickerItems.map((item, i) => (
-            <span key={`dup-${i}`} className="text-xs font-medium text-emerald-400 flex items-center">
-              <TrendingUp className="w-3 h-3 mr-1" /> {item}
+            <span key={`dup-${i}`} className="text-[9px] font-bold text-emerald-400/80 flex items-center gap-2 uppercase tracking-widest">
+              <div className="w-1 h-1 bg-brand-500 rounded-full"></div>
+              {item}
             </span>
           ))}
         </div>
       </div>
 
-      <div className="bg-slate-900/50 backdrop-blur-md border-b border-slate-700/60 sticky top-0 px-4 md:px-6 py-4 flex justify-between items-center mb-6 rounded-b-xl lg:rounded-none lg:bg-transparent lg:border-b-0 lg:static">
+      <div className="bg-slate-900/60 backdrop-blur-xl border-b border-white/5 px-4 md:px-8 py-3 flex justify-between items-center lg:bg-transparent lg:border-b-0 lg:backdrop-blur-none">
         
-        {/* Mobile Menu Trigger & Title */}
         <div className="flex items-center gap-3">
+          {/* Logo principal como trigger do menu mobile */}
           <button 
             onClick={onOpenMobileMenu}
-            className="lg:hidden p-2 -ml-2 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors"
+            className="lg:hidden relative p-1 border border-brand-500/20 rounded-xl bg-slate-950/50 shadow-lg active:scale-90 transition-transform group"
+            aria-label="Menu"
           >
-            <Menu className="w-6 h-6" />
+             <Logo className="w-9 h-9" />
+             <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-brand-500 rounded-full border-2 border-slate-900 animate-pulse"></div>
           </button>
           
-          <h2 className="text-xl font-bold text-white tracking-tight">
+          <h2 className="text-lg md:text-xl font-black text-white tracking-tighter truncate max-w-[150px] md:max-w-none">
             {getPageTitle(currentView)}
           </h2>
         </div>
 
         <div className="flex items-center gap-2 md:gap-4">
-          
-          {/* Language Selector */}
           <div className="relative" ref={langRef}>
             <button 
               onClick={() => setShowLangMenu(!showLangMenu)}
-              className="flex items-center space-x-2 text-slate-300 hover:text-white transition-colors bg-slate-800/80 p-2 rounded-lg border border-slate-700/50"
+              className="flex items-center space-x-1 text-slate-300 hover:text-white transition-colors bg-slate-800/50 p-2 rounded-xl border border-white/5 active:scale-95"
             >
-              <Globe className="w-5 h-5" />
-              <span className="text-sm font-medium uppercase hidden md:inline">{language}</span>
-              <ChevronDown className="w-4 h-4" />
+              <Globe className="w-4 h-4" />
+              <span className="text-[10px] font-black uppercase hidden md:inline">{language}</span>
+              <ChevronDown className="w-3 h-3" />
             </button>
 
             {showLangMenu && (
-              <div className="absolute right-0 mt-2 w-40 bg-slate-800 border border-slate-700 rounded-xl shadow-xl overflow-hidden animate-slideIn origin-top-right z-50">
+              <div className="absolute right-0 mt-2 w-40 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-slide-up z-50">
                 {languages.map((lang) => (
                   <button
                     key={lang.code}
@@ -139,63 +171,57 @@ export const TopBar: React.FC<TopBarProps> = ({
                       setLanguage(lang.code as Language);
                       setShowLangMenu(false);
                     }}
-                    className={`w-full text-left px-4 py-3 text-sm flex items-center hover:bg-slate-700 transition-colors ${language === lang.code ? 'text-brand-400 bg-slate-700/50' : 'text-slate-300'}`}
+                    className={`w-full text-left px-4 py-3 text-xs font-bold flex items-center hover:bg-white/5 transition-colors ${language === lang.code ? 'text-brand-400 bg-white/5' : 'text-slate-400'}`}
                   >
-                    <span className="mr-3 text-lg">{lang.flag}</span>
+                    <span className="mr-3 text-base">{lang.flag}</span>
                     {lang.label}
-                    {language === lang.code && <Check className="w-3 h-3 ml-auto" />}
+                    {language === lang.code && <Check className="w-3 h-3 ml-auto text-brand-400" />}
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Notifications */}
           <div className="relative" ref={notifRef}>
             <button 
               onClick={handleNotifClick}
-              className="relative p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+              className="relative p-2 text-slate-300 hover:text-white bg-slate-800/50 rounded-xl border border-white/5 active:scale-95 transition-all"
             >
-              <Bell className="w-6 h-6" />
+              <Bell className="w-5 h-5" />
               {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse border-2 border-slate-900 shadow-lg shadow-red-500/50">
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-500 text-slate-950 text-[9px] font-black flex items-center justify-center rounded-full border-2 border-slate-900">
                   {unreadCount}
                 </span>
               )}
             </button>
 
             {showNotifMenu && (
-              <div className="absolute right-0 mt-2 w-80 md:w-96 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl overflow-hidden animate-slideIn origin-top-right z-50">
-                <div className="p-4 border-b border-slate-700 flex justify-between items-center">
-                  <h3 className="font-semibold text-white">{t(language, 'notifications')}</h3>
-                  <button 
-                    onClick={() => setShowNotifMenu(false)}
-                    className="text-slate-500 hover:text-white"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+              <div className="absolute right-0 mt-2 w-[85vw] md:w-96 bg-slate-900 border border-white/10 rounded-[2rem] shadow-2xl overflow-hidden animate-slide-up z-50">
+                <div className="p-5 border-b border-white/5 flex justify-between items-center">
+                  <h3 className="text-xs font-black text-white uppercase tracking-widest">{t(language, 'notifications')}</h3>
+                  <button onClick={() => setShowNotifMenu(false)} className="text-slate-500 hover:text-white"><X className="w-4 h-4" /></button>
                 </div>
 
-                <div className="max-h-[400px] overflow-y-auto">
+                <div className="max-h-[60vh] overflow-y-auto">
                   {notifications.length === 0 ? (
-                    <div className="p-8 text-center text-slate-500">
-                      <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">{t(language, 'noNotifications')}</p>
+                    <div className="p-10 text-center text-slate-600">
+                      <Bell className="w-8 h-8 mx-auto mb-3 opacity-20" />
+                      <p className="text-xs font-bold uppercase tracking-widest">{t(language, 'noNotifications')}</p>
                     </div>
                   ) : (
-                    <div className="divide-y divide-slate-700/50">
+                    <div className="divide-y divide-white/5">
                       {[...notifications].reverse().map((notif) => (
-                        <div key={notif.id} className={`p-4 hover:bg-slate-700/30 transition-colors ${!notif.read ? 'bg-slate-700/20' : ''}`}>
+                        <div key={notif.id} className={`p-5 hover:bg-white/[0.02] transition-colors ${!notif.read ? 'bg-white/[0.01]' : ''}`}>
                           <div className="flex justify-between items-start mb-1">
-                            <h4 className={`text-sm font-medium ${
-                              notif.type === 'success' ? 'text-green-400' : 
-                              notif.type === 'warning' ? 'text-yellow-400' : 'text-blue-400'
+                            <h4 className={`text-xs font-black uppercase tracking-tight ${
+                              notif.type === 'success' ? 'text-brand-400' : 
+                              notif.type === 'warning' ? 'text-amber-400' : 'text-indigo-400'
                             }`}>
                               {notif.title}
                             </h4>
-                            <span className="text-[10px] text-slate-500">{formatDate(notif.date)}</span>
+                            <span className="text-[9px] text-slate-600 font-mono">{formatDate(notif.date)}</span>
                           </div>
-                          <p className="text-sm text-slate-300 leading-snug">{notif.message}</p>
+                          <p className="text-xs text-slate-400 leading-snug">{notif.message}</p>
                         </div>
                       ))}
                     </div>
@@ -204,7 +230,6 @@ export const TopBar: React.FC<TopBarProps> = ({
               </div>
             )}
           </div>
-
         </div>
       </div>
     </div>

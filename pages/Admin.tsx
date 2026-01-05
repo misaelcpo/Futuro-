@@ -1,260 +1,342 @@
+
 import React, { useState } from 'react';
 import { 
   ShieldAlert, 
   Users, 
-  DollarSign, 
-  Activity, 
   Search, 
-  Edit3, 
-  Lock, 
-  Unlock, 
-  Save, 
-  Zap, 
-  CheckCircle2,
-  AlertTriangle
+  Activity,
+  Database,
+  TrendingUp,
+  X,
+  Filter,
+  Lock,
+  Zap,
+  ArrowUpRight,
+  Wallet,
+  Globe,
+  BarChart3,
+  Server,
+  ShieldCheck,
+  ArrowRightLeft,
+  UserCheck,
+  Edit2,
+  Trash2,
+  Ban,
+  DollarSign,
+  Cpu
 } from 'lucide-react';
-import { Language, UserState } from '../types';
-import { t } from '../translations';
+import { Language, UserState, UserRole } from '../types';
 import { formatCurrency } from '../utils';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface AdminProps {
   language: Language;
-  currentUser: UserState; // Represents the "target" user for demo purposes in this single-user simulation
-  onUpdateUser: (updates: Partial<UserState>) => void;
+  currentUser: UserState;
+  allUsers: UserState[];
+  systemConfig: { withdrawalsEnabled: boolean, globalYieldMultiplier: number };
+  onUpdateUser: (userId: string, updates: Partial<UserState>) => void;
   onDistributeYield: (percentage: number) => void;
+  onToggleWithdrawals: () => void;
 }
 
-export const Admin: React.FC<AdminProps> = ({ language, currentUser, onUpdateUser, onDistributeYield }) => {
-  // Stats
-  const liquidity = 1450230.50 + currentUser.activeCapital;
-  const totalUsers = 15420;
-  
-  // Yield Logic
-  const [yieldPercent, setYieldPercent] = useState<string>('3.50');
-  const [distributing, setDistributing] = useState(false);
-  const [distributeSuccess, setDistributeSuccess] = useState(false);
-
-  // User Management Logic
+export const Admin: React.FC<AdminProps> = ({ 
+  currentUser, 
+  allUsers, 
+  onUpdateUser, 
+  onDistributeYield, 
+  onToggleWithdrawals,
+  systemConfig 
+}) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
-  
-  // Local state for editing form
-  const [editForm, setEditForm] = useState({
-    balance: currentUser.balance,
-    activeCapital: currentUser.activeCapital,
-    isBlocked: false
-  });
+  const [editingUser, setEditingUser] = useState<UserState | null>(null);
+  const [yieldPercent, setYieldPercent] = useState('1.5');
 
-  const handleYieldSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const pct = parseFloat(yieldPercent);
-    if (pct <= 0) return;
-    
-    setDistributing(true);
-    setTimeout(() => {
-      onDistributeYield(pct);
-      setDistributing(false);
-      setDistributeSuccess(true);
-      setTimeout(() => setDistributeSuccess(false), 3000);
-    }, 2000);
-  };
+  const platformData = [
+    { name: 'Seg', v: 120000 },
+    { name: 'Ter', v: 145000 },
+    { name: 'Qua', v: 138000 },
+    { name: 'Qui', v: 165000 },
+    { name: 'Sex', v: 189000 },
+    { name: 'Sab', v: 210000 },
+    { name: 'Dom', v: 245000 },
+  ];
 
-  const handleSaveUser = () => {
-    onUpdateUser({
-      balance: editForm.balance,
-      activeCapital: editForm.activeCapital
-    });
-    setIsEditing(false);
-  };
+  const filteredUsers = allUsers.filter(u => 
+    u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    u.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalLiquidity = allUsers.reduce((acc, curr) => acc + curr.balance, 0);
+  const totalHashrate = allUsers.reduce((acc, curr) => acc + curr.investedCashback, 0);
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-red-900 to-slate-900 p-8 rounded-2xl border border-red-500/30 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-8 opacity-10">
-          <ShieldAlert className="w-32 h-32 text-red-500" />
+    <div className="space-y-8 animate-slide-up pb-32">
+      {/* Header Admin */}
+      <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-slate-950 border border-white/5 p-8 rounded-[2.5rem] relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-full bg-orange-500/5 blur-[100px] -mr-32"></div>
+        <div className="space-y-1 relative z-10">
+          <div className="flex items-center gap-2 mb-2">
+            <ShieldAlert className="w-4 h-4 text-orange-400" />
+            <span className="text-[10px] font-black text-orange-400 uppercase tracking-[0.3em]">Master Frame Control</span>
+          </div>
+          <h1 className="text-4xl font-black text-white tracking-tighter">Comando <span className="text-orange-500">Mestre</span></h1>
         </div>
-        <h1 className="text-3xl font-black text-white flex items-center gap-3 relative z-10">
-          <ShieldAlert className="text-red-500" />
-          {t(language, 'adminTitle')}
-        </h1>
-        <p className="text-red-200 mt-2 relative z-10">GOD MODE ACTIVE • Acesso Total Liberado</p>
-      </div>
+        <div className="flex flex-wrap gap-4 relative z-10 w-full lg:w-auto">
+           <div className="flex-1 lg:flex-none px-6 py-3 bg-slate-900 rounded-2xl border border-white/5 text-center">
+              <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Usuários Online</p>
+              <p className="text-xl font-black text-emerald-400">{allUsers.length}</p>
+           </div>
+           <div className="flex-1 lg:flex-none px-6 py-3 bg-slate-900 rounded-2xl border border-white/5 text-center">
+              <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Status Rede</p>
+              <p className="text-xl font-black text-orange-500">OPTIMAL</p>
+           </div>
+        </div>
+      </header>
 
-      {/* Stats Grid */}
+      {/* Stats Administrativos */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="glass-card p-6 rounded-xl flex items-center justify-between">
-          <div>
-            <p className="text-slate-400 text-xs font-bold uppercase">{t(language, 'systemLiquidity')}</p>
-            <p className="text-2xl font-black text-white mt-1">{formatCurrency(liquidity)}</p>
-          </div>
-          <div className="p-3 bg-brand-500/20 rounded-lg text-brand-500">
-            <DollarSign className="w-6 h-6" />
-          </div>
+        <div className="glass-panel p-8 rounded-[2.5rem] border-white/5 bg-slate-950/40 space-y-4">
+           <div className="flex justify-between items-start">
+              <div className="p-4 bg-orange-500/10 text-orange-500 rounded-2xl">
+                 <Database className="w-6 h-6" />
+              </div>
+              <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Auditado</span>
+           </div>
+           <div>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Liquidez Total em Custódia</p>
+              <h3 className="text-3xl font-black text-white font-mono">{formatCurrency(totalLiquidity)}</h3>
+           </div>
         </div>
-
-        <div className="glass-card p-6 rounded-xl flex items-center justify-between">
-          <div>
-            <p className="text-slate-400 text-xs font-bold uppercase">{t(language, 'activeUsers')}</p>
-            <p className="text-2xl font-black text-white mt-1">{totalUsers.toLocaleString()}</p>
-          </div>
-          <div className="p-3 bg-blue-500/20 rounded-lg text-blue-500">
-            <Users className="w-6 h-6" />
-          </div>
+        <div className="glass-panel p-8 rounded-[2.5rem] border-white/5 bg-slate-950/40 space-y-4">
+           <div className="flex justify-between items-start">
+              <div className="p-4 bg-blue-500/10 text-blue-500 rounded-2xl">
+                 <Cpu className="w-6 h-6" />
+              </div>
+              <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Pool Ativa</span>
+           </div>
+           <div>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Poder de Hash Global</p>
+              <h3 className="text-3xl font-black text-white font-mono">{totalHashrate.toFixed(2)} <span className="text-xs">TH/s</span></h3>
+           </div>
         </div>
-
-        <div className="glass-card p-6 rounded-xl flex items-center justify-between">
-          <div>
-            <p className="text-slate-400 text-xs font-bold uppercase">{t(language, 'dailyPayouts')}</p>
-            <p className="text-2xl font-black text-white mt-1">R$ 342.105,00</p>
-          </div>
-          <div className="p-3 bg-purple-500/20 rounded-lg text-purple-500">
-            <Activity className="w-6 h-6" />
-          </div>
+        <div className="glass-panel p-8 rounded-[2.5rem] border-white/5 bg-slate-950/40 space-y-4">
+           <div className="flex justify-between items-start">
+              <div className="p-4 bg-purple-500/10 text-purple-500 rounded-2xl">
+                 <Zap className="w-6 h-6" />
+              </div>
+              <span className="text-[10px] font-black text-purple-500 uppercase tracking-widest">Receita Admin</span>
+           </div>
+           <div>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Comissão de Plataforma (Taxas)</p>
+              <h3 className="text-3xl font-black text-white font-mono">{formatCurrency(currentUser.adminRevenue || 0)}</h3>
+           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
-        {/* Manual Yield Control */}
-        <div className="glass-card p-8 rounded-2xl border-t-4 border-t-brand-500 shadow-xl">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-brand-500 text-slate-900 rounded-lg">
-              <Zap className="w-6 h-6 fill-current" />
-            </div>
-            <h3 className="text-xl font-bold text-white">{t(language, 'manualYield')}</h3>
-          </div>
-
-          <form onSubmit={handleYieldSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-bold text-slate-300 mb-2">{t(language, 'yieldPercent')}</label>
-              <div className="relative">
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  min="0.01"
-                  value={yieldPercent}
-                  onChange={(e) => setYieldPercent(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl py-4 px-4 text-white text-2xl font-bold outline-none focus:ring-2 focus:ring-brand-500"
-                />
-                <span className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-500 font-bold">%</span>
+      {/* Controles Globais e Gráfico */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-8 glass-panel p-10 rounded-[3.5rem] border-white/5 bg-slate-950/30">
+           <div className="flex justify-between items-center mb-10">
+              <h3 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+                 <BarChart3 className="w-6 h-6 text-orange-500" /> Atividade Financeira
+              </h3>
+              <div className="flex gap-2">
+                 <span className="px-4 py-1 bg-white/5 border border-white/5 text-slate-400 rounded-full text-[9px] font-black uppercase tracking-widest">Timeframe: 7D</span>
               </div>
-            </div>
-
-            {distributeSuccess && (
-              <div className="bg-green-500/20 text-green-400 p-4 rounded-xl flex items-center border border-green-500/30">
-                <CheckCircle2 className="w-5 h-5 mr-2" />
-                {t(language, 'yieldSuccess')}
-              </div>
-            )}
-
-            <button 
-              type="submit"
-              disabled={distributing}
-              className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg flex justify-center items-center transition-all ${
-                distributing 
-                  ? 'bg-slate-700 text-slate-500 cursor-not-allowed' 
-                  : 'bg-brand-600 hover:bg-brand-500 text-white'
-              }`}
-            >
-              {distributing ? 'Processando Blockchain...' : t(language, 'distributeBtn')}
-            </button>
-          </form>
+           </div>
+           <div className="h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={platformData}>
+                  <defs>
+                    <linearGradient id="colorAdmin" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#f97316" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.02)" />
+                  <XAxis dataKey="name" stroke="#475569" fontSize={10} axisLine={false} tickLine={false} />
+                  <YAxis hide />
+                  <Area type="monotone" dataKey="v" stroke="#f97316" strokeWidth={3} fill="url(#colorAdmin)" />
+                </AreaChart>
+              </ResponsiveContainer>
+           </div>
         </div>
 
-        {/* User Management */}
-        <div className="glass-card p-8 rounded-2xl border-t-4 border-t-blue-500 shadow-xl">
-           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-blue-500 text-white rounded-lg">
-              <Edit3 className="w-6 h-6" />
+        <div className="lg:col-span-4 space-y-6">
+           <div className="glass-panel p-8 rounded-[3rem] border-orange-500/20 bg-orange-500/5 space-y-6">
+              <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
+                 <Zap className="w-4 h-4 text-orange-500" /> Gatilhos de Controle
+              </h3>
+              <div className="space-y-4">
+                 <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase ml-1">Taxa de Rendimento (%)</label>
+                    <div className="flex gap-2">
+                       <input 
+                         type="number" 
+                         value={yieldPercent}
+                         onChange={(e) => setYieldPercent(e.target.value)}
+                         className="flex-1 bg-slate-950 border border-white/10 rounded-xl px-4 py-2 text-white font-mono text-sm"
+                       />
+                       <button 
+                         onClick={() => onDistributeYield(parseFloat(yieldPercent))}
+                         className="px-4 py-2 bg-orange-500 text-slate-950 rounded-xl font-black text-[10px] uppercase shadow-lg shadow-orange-500/10"
+                       >
+                          Rodar
+                       </button>
+                    </div>
+                 </div>
+                 <button 
+                   onClick={onToggleWithdrawals}
+                   className={`w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${systemConfig.withdrawalsEnabled ? 'bg-white text-slate-950' : 'bg-red-500 text-white'}`}
+                 >
+                    {systemConfig.withdrawalsEnabled ? <><Lock className="w-4 h-4" /> Congelar Saques</> : <><ShieldCheck className="w-4 h-4" /> Liberar Saques</>}
+                 </button>
+              </div>
+           </div>
+           
+           <div className="glass-panel p-8 rounded-[3rem] border-white/5 bg-slate-950/50 space-y-6">
+              <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
+                 <Server className="w-4 h-4 text-orange-500" /> Status do Core
+              </h3>
+              <div className="space-y-4">
+                 <div className="flex justify-between text-xs font-bold text-slate-500">
+                    <span>Database Engine</span>
+                    <span className="text-emerald-400">OPTIMAL</span>
+                 </div>
+                 <div className="flex justify-between text-xs font-bold text-slate-500">
+                    <span>Pending Withdrawals</span>
+                    <span className="text-white font-mono">0</span>
+                 </div>
+                 <div className="flex justify-between text-xs font-bold text-slate-500">
+                    <span>Active Sessions</span>
+                    <span className="text-white font-mono">{allUsers.length}</span>
+                 </div>
+              </div>
+           </div>
+        </div>
+      </div>
+
+      {/* Tabela de Gestão de Usuários */}
+      <div className="glass-panel rounded-[3rem] border-white/5 overflow-hidden bg-slate-950/40">
+         <div className="p-8 border-b border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+            <h3 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+               <Users className="w-6 h-6 text-orange-500" /> Gestão de Mineradores
+            </h3>
+            <div className="relative w-full md:w-96">
+               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+               <input 
+                 type="text" 
+                 placeholder="Buscar por nome ou e-mail..."
+                 value={searchTerm}
+                 onChange={(e) => setSearchTerm(e.target.value)}
+                 className="w-full bg-slate-900 border border-white/5 rounded-2xl py-3 pl-12 pr-4 text-sm text-white outline-none focus:border-orange-500"
+               />
             </div>
-            <h3 className="text-xl font-bold text-white">{t(language, 'userMgmt')}</h3>
-          </div>
+         </div>
 
-          {/* Search Bar */}
-          <div className="relative mb-6">
-            <input 
-              type="text" 
-              placeholder="Buscar por email, CPF ou nome..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-white outline-none focus:border-blue-500"
-            />
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
-          </div>
+         <div className="overflow-x-auto">
+            <table className="w-full text-left">
+               <thead className="bg-slate-900/50 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                  <tr>
+                     <th className="px-8 py-6">Minerador</th>
+                     <th className="px-8 py-6">Status</th>
+                     <th className="px-8 py-6">Saldo (BRL)</th>
+                     <th className="px-8 py-6">Poder (TH/s)</th>
+                     <th className="px-8 py-6 text-right">Ações</th>
+                  </tr>
+               </thead>
+               <tbody className="divide-y divide-white/5">
+                  {filteredUsers.map(user => (
+                     <tr key={user.id} className="hover:bg-white/[0.01] transition-colors">
+                        <td className="px-8 py-6">
+                           <div>
+                              <p className="text-sm font-bold text-white">{user.name}</p>
+                              <p className="text-[10px] text-slate-500 font-mono">{user.email}</p>
+                           </div>
+                        </td>
+                        <td className="px-8 py-6">
+                           <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter ${user.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                              {user.status}
+                           </span>
+                        </td>
+                        <td className="px-8 py-6 font-mono text-sm text-white">
+                           {formatCurrency(user.balance)}
+                        </td>
+                        <td className="px-8 py-6 font-mono text-sm text-orange-500">
+                           {user.investedCashback.toFixed(2)}
+                        </td>
+                        <td className="px-8 py-6 text-right">
+                           <div className="flex justify-end gap-2">
+                              <button 
+                                onClick={() => setEditingUser(user)}
+                                className="p-2 bg-slate-900 text-slate-400 hover:text-white rounded-lg border border-white/5 transition-colors"
+                              >
+                                 <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button 
+                                onClick={() => onUpdateUser(user.id, { status: user.status === 'ACTIVE' ? 'BANNED' : 'ACTIVE' })}
+                                className={`p-2 rounded-lg border border-white/5 transition-colors ${user.status === 'ACTIVE' ? 'bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white' : 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white'}`}
+                              >
+                                 <Ban className="w-4 h-4" />
+                              </button>
+                           </div>
+                        </td>
+                     </tr>
+                  ))}
+               </tbody>
+            </table>
+         </div>
+      </div>
 
-          {/* User Result (Simulated for current user) */}
-          <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
-             <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-700">
-               <div className="flex items-center gap-3">
-                 <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold">
-                    {currentUser.name.charAt(0)}
-                 </div>
-                 <div>
-                   <p className="text-white font-bold">{currentUser.name} <span className="text-xs bg-brand-500/20 text-brand-400 px-2 py-0.5 rounded ml-2">Online</span></p>
-                   <p className="text-slate-400 text-xs">{currentUser.email}</p>
-                 </div>
-               </div>
-               <button 
-                onClick={() => setIsEditing(!isEditing)}
-                className="text-blue-400 hover:text-white p-2 hover:bg-blue-500/20 rounded-lg transition-colors"
-               >
-                 <Edit3 className="w-5 h-5" />
-               </button>
+      {/* Modal de Edição de Usuário */}
+      {editingUser && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-fadeIn">
+          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-sm" onClick={() => setEditingUser(null)}></div>
+          <div className="relative glass-panel w-full max-w-md p-8 rounded-[2.5rem] border-white/10 shadow-2xl animate-slide-up">
+             <div className="flex justify-between items-center mb-8">
+                <h3 className="text-xl font-black text-white uppercase tracking-tight">Editar Minerador</h3>
+                <button onClick={() => setEditingUser(null)}><X className="w-6 h-6 text-slate-500 hover:text-white" /></button>
              </div>
+             
+             <div className="space-y-6">
+                <div className="space-y-2">
+                   <label className="text-[10px] font-black text-slate-500 uppercase ml-1">Saldo Atual (BRL)</label>
+                   <div className="relative">
+                      <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                      <input 
+                        type="number" 
+                        defaultValue={editingUser.balance}
+                        onBlur={(e) => onUpdateUser(editingUser.id, { balance: parseFloat(e.target.value) })}
+                        className="w-full bg-slate-950 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-white font-mono"
+                      />
+                   </div>
+                </div>
+                
+                <div className="space-y-2">
+                   <label className="text-[10px] font-black text-slate-500 uppercase ml-1">Poder de Hash (TH/s)</label>
+                   <div className="relative">
+                      <Cpu className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                      <input 
+                        type="number" 
+                        defaultValue={editingUser.investedCashback}
+                        onBlur={(e) => onUpdateUser(editingUser.id, { investedCashback: parseFloat(e.target.value) })}
+                        className="w-full bg-slate-950 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-white font-mono"
+                      />
+                   </div>
+                </div>
 
-             {isEditing ? (
-               <div className="space-y-4 animate-slideIn">
-                 <div>
-                   <label className="block text-xs text-slate-400 uppercase font-bold mb-1">Saldo (BRL)</label>
-                   <input 
-                      type="number" 
-                      value={editForm.balance}
-                      onChange={(e) => setEditForm({...editForm, balance: parseFloat(e.target.value)})}
-                      className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white"
-                   />
-                 </div>
-                 <div>
-                   <label className="block text-xs text-slate-400 uppercase font-bold mb-1">Capital Ativo (BRL)</label>
-                   <input 
-                      type="number" 
-                      value={editForm.activeCapital}
-                      onChange={(e) => setEditForm({...editForm, activeCapital: parseFloat(e.target.value)})}
-                      className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white"
-                   />
-                 </div>
-                 <div className="flex gap-2 pt-2">
+                <div className="pt-4">
                    <button 
-                    onClick={handleSaveUser}
-                    className="flex-1 bg-green-600 hover:bg-green-500 text-white py-2 rounded-lg font-bold flex items-center justify-center gap-2"
+                     onClick={() => setEditingUser(null)}
+                     className="w-full py-4 bg-orange-500 text-slate-950 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-orange-500/20"
                    >
-                     <Save className="w-4 h-4" /> Salvar
+                      Salvar Alterações
                    </button>
-                   <button 
-                    onClick={() => setEditForm({...editForm, isBlocked: !editForm.isBlocked})}
-                    className={`flex-1 ${editForm.isBlocked ? 'bg-slate-600' : 'bg-red-600'} text-white py-2 rounded-lg font-bold flex items-center justify-center gap-2`}
-                   >
-                     {editForm.isBlocked ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
-                     {editForm.isBlocked ? 'Desbloquear' : 'Bloquear'}
-                   </button>
-                 </div>
-               </div>
-             ) : (
-               <div className="grid grid-cols-2 gap-4">
-                 <div className="bg-slate-900 p-3 rounded-lg">
-                   <p className="text-xs text-slate-500">Saldo</p>
-                   <p className="text-white font-mono">{formatCurrency(currentUser.balance)}</p>
-                 </div>
-                 <div className="bg-slate-900 p-3 rounded-lg">
-                   <p className="text-xs text-slate-500">Capital Ativo</p>
-                   <p className="text-white font-mono">{formatCurrency(currentUser.activeCapital)}</p>
-                 </div>
-               </div>
-             )}
+                </div>
+             </div>
           </div>
         </div>
-
-      </div>
+      )}
     </div>
   );
 };
